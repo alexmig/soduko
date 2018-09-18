@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 enum {
 	KB		= 1024,
@@ -76,7 +77,7 @@ void print_hex_mask(const uint64_t msk, const char* msg, const void* buff, const
 int fd_write(const int fd, const void* buf, const uint64_t len); // Returns 0 on success
 int fd_read(const int fd, void* buf, const uint64_t len); // Returns 0 on success
 
-void file_write(const char* filename, const uint8_t* data, const uint64_t length);
-uint8_t* file_read(const char* filename, uint64_t* length);
+void file_write(const char* filename, const void* data, const uint64_t length);
+void* file_read(const char* filename, uint64_t* length);
 
 #endif // #ifndef __AM_COMMON__

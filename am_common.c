@@ -161,7 +161,7 @@ int fd_read(const int fd, void* buf, const uint64_t olen) // Returns 0 on succes
 	return 0;
 }
 
-void file_write(const char* filename, const uint8_t* data, const uint64_t length)
+void file_write(const char* filename, const void* data, const uint64_t length)
 {
 	int fd;
 	int rc;
@@ -181,7 +181,7 @@ void file_write(const char* filename, const uint8_t* data, const uint64_t length
 	log("Data saved to '%s'\n", filename);
 }
 
-uint8_t* file_read(const char* filename, uint64_t* length)
+void* file_read(const char* filename, uint64_t* length)
 {
 	int fd;
 	int rc;
@@ -219,7 +219,8 @@ uint8_t* file_read(const char* filename, uint64_t* length)
 		return NULL;
 	}
 
+	if (length != NULL) 
+		*length = file_size;
 	log("Read %ld bytes from '%s'\n", file_size, filename);
-	*length = file_size;
 	return buf;
 }
