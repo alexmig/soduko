@@ -1,6 +1,25 @@
 #include "am_common.h"
 #include "sdk_common.h"
 
+void coords_next_overflow(uint8_t* i, uint8_t* j)
+{
+	if (*j == (LINE_LENGTH - 1)) {
+		*i += 1;
+		*j = 0;
+	}
+	else {
+		*j += 1;
+	}
+}
+
+void coords_next_wrap(uint8_t* i, uint8_t* j)
+{
+	coords_next_overflow(i, j);
+	if (*i >= LINE_LENGTH) {
+		*i = 0;
+	}
+}
+
 void cell_init(cell_t* cell)
 {
 	memset(cell->possible_values, 1, sizeof(cell->possible_values));
@@ -59,13 +78,19 @@ void board_print(board_t* board, char* msg)
 	log("%s:\n", msg);
 	for (int i = 0; i < LINE_LENGTH; i++) {
 		for (int j = 0; j < LINE_LENGTH; j++) {
-			log("%3u ", board->cells[j][i].value);
+			if (board->cells[j][i].value == UNASSIGNED) {
+				log("  ");
+			}
+			else {
+				log("%u ", board->cells[j][i].value);
+			}
+
 			if (j == 2 || j == 5)
-				log(" ");
+				log("* ");
 		}
 		log("\n");
-		if (i == 2 || i == 5 || i == (LINE_LENGTH - 1))
-				log("\n");
+		if (i == 2 || i == 5)
+				log("*********************\n");
 	}
 }
 
@@ -109,4 +134,17 @@ void board_clear(board_t* board, uint8_t i, uint8_t j)
 		cell_allow(&board->cells[i][x], value);
 		cell_allow(&board->cells[block_i + (x % 3)][block_j + (x / 3)], value);
 	}
+}
+
+int board_is_possible(board_t* board, uint8_t i, uint8_t j, uint8_t value)
+{
+	uint8_t block_i = i - (i % 3);
+	uint8_t block_j = j - (j % 3);
+
+	for (int x = 0; x < LINE_LENGTH; x++) {
+		if (board->cells[x][j].value == value) return 0;
+		if (board->cells[i][x].value == value) return 0;
+		if (board->cells[block_i + (x % 3)][block_j + (x / 3)].value == value) return 0;
+	}
+	return 1;
 }

@@ -23,6 +23,9 @@ typedef struct {
 #include "am_common.h"
 #include "sdk_common.h"
 
+void coords_next_overflow(uint8_t* i, uint8_t* j);
+void coords_next_wrap(uint8_t* i, uint8_t* j);
+
 void cell_init(cell_t* cell);
 uint8_t cell_choose(cell_t* cell);
 void cell_forbid(cell_t* cell, uint8_t value);
@@ -36,5 +39,6 @@ void board_init(board_t* b);
 void board_assign(board_t* board, uint8_t i, uint8_t j, uint8_t value);
 void board_fix(board_t* board);
 void board_clear(board_t* board, uint8_t i, uint8_t j);
+int board_is_possible(board_t* board, uint8_t i, uint8_t j, uint8_t value);
 
 #endif /* __SDK_COMMON__ */
