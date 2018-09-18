@@ -1,6 +1,13 @@
 #include "am_common.h"
 #include "sdk_common.h"
 
+void coords_rand(uint8_t* i, uint8_t* j)
+{
+	uint64_t idx = rand() % BOARD_SIZE;
+	*i = idx % LINE_LENGTH;
+	*j = idx / LINE_LENGTH;
+}
+
 void coords_next_overflow(uint8_t* i, uint8_t* j)
 {
 	if (*j == (LINE_LENGTH - 1)) {

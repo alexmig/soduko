@@ -5,15 +5,17 @@ static int game_generate(board_t* b, uint8_t i, uint8_t j)
 {
 	cell_t* c;
 	board_t b_tmp;
-	uint8_t i_next = i + (j == (LINE_LENGTH - 1) ? 1 : 0);
-	uint8_t j_next = (j == (LINE_LENGTH - 1) ? 0 : j + 1);
-	
+	uint8_t i_next = i;
+	uint8_t j_next = j;
+
+	coords_next_overflow(&i_next, &j_next);
+
 	if (i >= LINE_LENGTH) {
 		return 1;
 	}
 
 	c = &b->cells[i][j];
-	
+
 	// TODO: Randomize
 	for (uint8_t v = 0; v < LINE_LENGTH; v++) {
 		if (!c->possible_values[v])

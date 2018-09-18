@@ -8,6 +8,7 @@
 enum {
 	LINE_LENGTH = 9,
 	UNASSIGNED = 255,
+	BOARD_SIZE = LINE_LENGTH * LINE_LENGTH,
 };
 
 typedef struct {
@@ -23,6 +24,7 @@ typedef struct {
 #include "am_common.h"
 #include "sdk_common.h"
 
+void coords_rand(uint8_t* i, uint8_t* j);
 void coords_next_overflow(uint8_t* i, uint8_t* j);
 void coords_next_wrap(uint8_t* i, uint8_t* j);
 
