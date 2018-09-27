@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -28,6 +29,8 @@ typedef enum rc_e {
 	RC_SUCCESS,
 	RC_ERROR,
 } rc_t;
+
+typedef int socket_t;
 
 // Useful macros
 
@@ -68,16 +71,36 @@ static inline uint64_t get_time()
 	return (((uint64_t)__ft_time_timeval__.tv_sec) * 1000000) + __ft_time_timeval__.tv_usec;
 }
 
+// Printouts
+
 void print_binary(const char* msg, const void* buf, const uint64_t length);
 void print_binary_mask(const uint64_t msk, const char* msg, const void* buff, const uint64_t length);
 
 void print_hex(const char* msg, const void* buf, const uint64_t length);
 void print_hex_mask(const uint64_t msk, const char* msg, const void* buff, const uint64_t length);
 
-int fd_write(const int fd, const void* buf, const uint64_t len); // Returns 0 on success
-int fd_read(const int fd, void* buf, const uint64_t len); // Returns 0 on success
+// fd io
+
+rc_t fd_write(const int fd, const void* buf, const uint64_t len); // Returns 0 on success
+rc_t fd_read(const int fd, void* buf, const uint64_t len); // Returns 0 on success
+
+// file io
 
 void file_write(const char* filename, const void* data, const uint64_t length);
 void* file_read(const char* filename, uint64_t* length);
+
+// Sockets (blocking)
+
+rc_t skt_connect(const sa_family_t fam, const char* addr, const uint16_t port, socket_t* fd);
+rc_t skt_listen(const sa_family_t fam, const char* addr, const uint16_t port, socket_t* fd);
+rc_t skt_accept(const socket_t server, socket_t* client);
+void skt_disconnect(socket_t* fd);
+#define skt_write(skt, buf, len) fd_write((skt), (buf), (len))
+#define skt_read(skt, buf, len) fd_read((skt), (buf), (len))
+
+// Utillity
+
+/* strncpy that returns number of character copied, EXCLUDING null terminator */
+uint64_t strlncpy(void* to, const void* from, uint64_t remaining);
 
 #endif // #ifndef __AM_COMMON__
