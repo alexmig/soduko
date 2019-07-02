@@ -67,38 +67,105 @@ typedef struct amc_position {
 
 
 
-void salsa20_init(am_cipher_block_t* amcb, )
-{
-}
-
 #define ROTL(a,b) (((a) << (b)) | ((a) >> (32 - (b))))
+
 #define QR(a, b, c, d)(		\
 	b ^= ROTL(a + d, 7),	\
 	c ^= ROTL(b + a, 9),	\
 	d ^= ROTL(c + b,13),	\
 	a ^= ROTL(d + c,18))
+
+#define ROUND_COLUMNS(data) do { \
+		QR(data[ 0], data[ 4], data[ 8], data[12]);	\
+		QR(data[ 5], data[ 9], data[13], data[ 1]);	\
+		QR(data[10], data[14], data[ 2], data[ 6]);	\
+		QR(data[15], data[ 3], data[ 7], data[11]);	\
+	} while (0)
+
+#define ROUND_ROWS(data) do { \
+		QR(data[ 0], data[ 1], data[ 2], data[ 3]); \
+		QR(data[ 5], data[ 6], data[ 7], data[ 4]); \
+		QR(data[10], data[11], data[ 8], data[ 9]); \
+		QR(data[15], data[12], data[13], data[14]); \
+	} while (0)
+
 #define ROUNDS 20
 
-void salsa20_block(uint32_t out[16], uint32_t const in[16])
+
+
+void s20_key_mix(uint32_t data[static 16])
 {
 	int i;
-	uint32_t x[16];
+	uint32_t copy[16];
 
 	for (i = 0; i < 16; ++i)
-		x[i] = in[i];
+		copy[i] = data[i];
 	// 10 loops × 2 rounds/loop = 20 rounds
 	for (i = 0; i < ROUNDS; i += 2) {
 		// Odd round
-		QR(x[ 0], x[ 4], x[ 8], x[12]);	// column 1
-		QR(x[ 5], x[ 9], x[13], x[ 1]);	// column 2
-		QR(x[10], x[14], x[ 2], x[ 6]);	// column 3
-		QR(x[15], x[ 3], x[ 7], x[11]);	// column 4
+		ROUND_COLUMNS(copy);
+
 		// Even round
-		QR(x[ 0], x[ 1], x[ 2], x[ 3]);	// row 1
-		QR(x[ 5], x[ 6], x[ 7], x[ 4]);	// row 2
-		QR(x[10], x[11], x[ 8], x[ 9]);	// row 3
-		QR(x[15], x[12], x[13], x[14]);	// row 4
+		ROUND_ROWS(copy);
 	}
+
 	for (i = 0; i < 16; ++i)
-		out[i] = x[i] + in[i];
+		data[i] += copy[i];
+}
+
+typedef union s20_word {
+	uint8_t u8[4];
+	uint8_t u32;
+} s20_word_t;
+
+// The 32-byte (256-bit) key expansion function
+static void s20_generate_key(uint8_t key[static 32],
+                         uint8_t nonce[static 8],
+                         uint64_t position[static 8],
+                         uint8_t keystream[static 64])
+{
+	static s20_word_t words[4] = {
+			{ .u8 = { 'e', 'x', 'p', 'a' } },
+			{ .u8 = { 'n', 'd', ' ', '3' } },
+			{ .u8 = { '2', '-', 'b', 'y' } },
+			{ .u8 = { 't', 'e', ' ', 'k' } }
+		};
+
+	memcpy(&keystream[0],	&words[0], 4);
+	memcpy(&keystream[4],	&key[0], 16);
+	memcpy(&keystream[20],	&words[1], 4);
+	memcpy(&keystream[24],	&nonce[0], 8);
+	memcpy(&keystream[32],	&position[0], 8);
+	memcpy(&keystream[40],	&words[2], 4);
+	memcpy(&keystream[44],	&key[16], 16);
+	memcpy(&keystream[60],	&words[3], 4);
+
+	s20_key_mix(keystream);
+}
+
+
+// Performs up to 2^32-1 bytes of encryption or decryption under a
+// 128- or 256-bit key and 64-byte nonce.
+enum s20_status_t s20_crypt(uint8_t key[static 32],
+                            uint8_t nonce[static 8],
+                            uint64_t data_pos,
+                            uint8_t *buf,
+                            uint64_t buflen)
+{
+	uint8_t keystream[64];
+	uint8_t position[8];
+	uint64_t i;
+	uint64_t next_key_gen = 0;
+
+	for (i = 0; i < buflen; ++i) {
+		if (next_key_gen == i) {
+			uint64_t block_id = (data_pos + i) / 64;
+			position = htole64(block_id);
+			s20_generate_key(key, nonce, position, keystream);
+			next_key_gen = ((block_id + 1) * 64) - data_pos;
+		}
+
+		buf[i] ^= keystream[(data_pos + i) % 64];
+	}
+	return S20_SUCCESS;
 }

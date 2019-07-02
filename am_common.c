@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 
 #include "am_common.h"
 
@@ -403,3 +404,25 @@ uint64_t strlncpy(void* to, const void* from, uint64_t remaining)
 	return _to - (uint8_t*)to;
 }
 
+
+/* Randomizes length */
+void randomize_length(void* buffer, uint64_t length, const bool_t should_scramble_seed)
+{
+	uint8_t* buf = buffer;
+	uint32_t rnum = 0;
+	uint8_t modc = 0;
+
+	if (should_scramble_seed)
+		srand(get_time());
+
+	for (modc = 0; length > 0; length--, buf++) {
+		if (modc == 0) {
+			modc = 3;
+			rnum = rand();
+		}
+		modc--;
+
+		*buf = rnum & 0xFF;
+		rnum = rnum >> 8;
+	}
+}

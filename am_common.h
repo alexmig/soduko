@@ -50,9 +50,9 @@ extern int		am_common_log_fd;
 #define logm(msk, fmt, args...)	{ if (log_printable((msk))) { __AM_LOG_PFX(fmt, ##args); }}
 #define wrnm(msk, fmt, args...)	{ if (log_printable((msk))) { __AM_LOG_PFX("WARNING: "fmt, ##args); }}
 #define errm(msk, fmt, args...)	{ if (log_printable((msk))) { __AM_LOG_PFX("ERROR: "fmt, ##args); }}
-#define log(fmt, args...)		{ __AM_LOG_TXT(fmt, ##args); }
-#define wrn(fmt, args...)		{ __AM_LOG_TXT("WARNING: "fmt, ##args); }
-#define err(fmt, args...)		{ __AM_LOG_TXT("ERROR: "fmt, ##args); }
+#define log(fmt, args...)		__AM_LOG_TXT(fmt, ##args)
+#define wrn(fmt, args...)		__AM_LOG_TXT("WARNING: "fmt, ##args)
+#define err(fmt, args...)		__AM_LOG_TXT("ERROR: "fmt, ##args)
 #define log_flush()				fdatasync(am_common_log_fd)
 
 #define log_set_mask(msk)	am_common_log_mask = (msk)
@@ -61,15 +61,6 @@ extern int		am_common_log_fd;
 
 void log_init(char* filename);
 void log_close();
-
-static inline uint64_t get_time()
-{
-	struct timeval __ft_time_timeval__;
-	if (gettimeofday(&__ft_time_timeval__, NULL) == -1) {
-		return 0;
-	}
-	return (((uint64_t)__ft_time_timeval__.tv_sec) * 1000000) + __ft_time_timeval__.tv_usec;
-}
 
 // Printouts
 
@@ -102,5 +93,17 @@ void skt_disconnect(socket_t* fd);
 
 /* strncpy that returns number of character copied, EXCLUDING null terminator */
 uint64_t strlncpy(void* to, const void* from, uint64_t remaining);
+
+/* Randomizes length */
+void randomize_length(void* buffer, uint64_t length, bool_t should_scramble_seed);
+
+static inline uint64_t get_time()
+{
+	struct timeval __ft_time_timeval__;
+	if (gettimeofday(&__ft_time_timeval__, NULL) == -1) {
+		return 0;
+	}
+	return (((uint64_t)__ft_time_timeval__.tv_sec) * 1000000) + __ft_time_timeval__.tv_usec;
+}
 
 #endif // #ifndef __AM_COMMON__
